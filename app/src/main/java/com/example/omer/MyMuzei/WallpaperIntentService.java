@@ -1,4 +1,4 @@
-package com.example.omer.wallpaperapp;
+package com.example.omer.MyMuzei;
 
 import android.app.AlarmManager;
 import android.app.IntentService;
@@ -11,11 +11,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.widget.Toast;
-import android.os.Handler;
-import java.util.Timer;
-import java.util.TimerTask;
+
 import java.io.IOException;
-import android.text.format.Time;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in

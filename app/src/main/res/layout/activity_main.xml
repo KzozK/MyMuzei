@@ -29,7 +29,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/imageView"
         android:contentDescription="image to wallpaper"
-        android:src="@drawable/turkey"/>
+        android:src="@drawable/ggstyle"/>
 
     </LinearLayout>
 </RelativeLayout>

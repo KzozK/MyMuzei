@@ -1,4 +1,4 @@
-package com.example.omer.wallpaperapp;
+package com.example.omer.MyMuzei;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
