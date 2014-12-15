@@ -1,6 +1,9 @@
 package com.example.omer.MyMuzei;
 
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -47,10 +50,10 @@ public class MainActivity extends Activity {
         finish();
     }
 /*
-    public void btnCancelSchedules(View v) {
-
         Intent intent = new Intent(getApplicationContext(), AlaramReceiver.class);
         intent.putExtra(AlaramReceiver.ACTION_ALARM, AlaramReceiver.ACTION_ALARM);
+
+        //PendingIntent pendingIntent = PendingIntent.getBroadcast(this, alert.idAlert, intent, PendingIntent.FLAG_UPDATE_CURRENT)
 
         final PendingIntent pIntent = PendingIntent.getBroadcast(this, 1234567,
                 intent, PendingIntent.FLAG_UPDATE_CURRENT);

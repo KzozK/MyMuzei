@@ -121,7 +121,7 @@ public class WallpaperIntentService extends IntentService {
             long currentTimeMillis = System.currentTimeMillis();
             AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 //        alarmManager.set(AlarmManager.RTC, currentTimeMillis + (5 * 1000), pendingIntent);
-            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, 0, currentTimeMillis + (5 * 1000), pendingIntent);
+            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, 0, (20 * 1000), pendingIntent);
         } catch (Exception e) {
             e.printStackTrace();
         }
