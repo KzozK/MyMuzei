@@ -9,6 +9,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
+import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -150,8 +151,15 @@ public class WallpaperIntentService extends IntentService {
             Bitmap bitmap = Bitmap.createScaledBitmap(rome, width, height, true);
             wallpaperManager.setBitmap(bitmap);
 
-            Toast toast = Toast.makeText(this, "Set wallpaper on BG successfully!", Toast.LENGTH_LONG);
-            toast.show();
+
+            Handler mHandler = new Handler(getMainLooper());
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(), "Wallpaper change successfully", Toast.LENGTH_SHORT).show();
+                }
+            });
+
         } catch (IOException e) {
             e.printStackTrace();
         }
