@@ -23,69 +23,33 @@ import java.io.IOException;
  * helper methods.
  */
 public class WallpaperIntentService extends IntentService {
-    // TODO: Rename actions, choose action names that describe tasks that this
-    // IntentService can perform, e.g. ACTION_FETCH_NEW_ITEMS
-    private static final String ACTION_FOO = "com.example.omer.wallpaperapp.action.FOO";
-    private static final String ACTION_BAZ = "com.example.omer.wallpaperapp.action.BAZ";
 
-    // TODO: Rename parameters
-    private static final String EXTRA_PARAM1 = "com.example.omer.wallpaperapp.extra.PARAM1";
-    private static final String EXTRA_PARAM2 = "com.example.omer.wallpaperapp.extra.PARAM2";
-
-    /**
-     * Starts this service to perform action Foo with the given parameters. If
-     * the service is already performing a task this action will be queued.
-     *
-     * @see IntentService
-     */
-    // TODO: Customize helper method
-    public static void startActionFoo(Context context, String param1, String param2) {
-        Intent intent = new Intent(context, WallpaperIntentService.class);
-        intent.setAction(ACTION_FOO);
-        intent.putExtra(EXTRA_PARAM1, param1);
-        intent.putExtra(EXTRA_PARAM2, param2);
-        context.startService(intent);
-    }
-
-    /**
-     * Starts this service to perform action Baz with the given parameters. If
-     * the service is already performing a task this action will be queued.
-     *
-     * @see IntentService
-     */
-    // TODO: Customize helper method
-    public static void startActionBaz(Context context, String param1, String param2) {
-        Intent intent = new Intent(context, WallpaperIntentService.class);
-        intent.setAction(ACTION_BAZ);
-        intent.putExtra(EXTRA_PARAM1, param1);
-        intent.putExtra(EXTRA_PARAM2, param2);
-        context.startService(intent);
-    }
+    public static final String BROADCAST_STOP_ACTION = "com.example.omer.MyMuzei.STOPSERVICE";
+    private static boolean isFirstTime = true;
+    private AlarmManager alarmManager;
 
     public WallpaperIntentService() {
         super("WallpaperIntentService");
     }
 
-    private static boolean isFirstTime = true;
+    @Override
+    public void onCreate()
+    {
+        super.onCreate();
+        this.alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+    }
 
     @Override
     protected void onHandleIntent(Intent intent) {
         Log.d("SERVICEEEEEE", "onHandleIntent()");
 
-        //startTimer();
-
-        //String dataString = workIntent.getDataString();
-
         if (intent != null) {
             final String action = intent.getAction();
-            if (ACTION_FOO.equals(action)) {
-                final String param1 = intent.getStringExtra(EXTRA_PARAM1);
-                final String param2 = intent.getStringExtra(EXTRA_PARAM2);
-                handleActionFoo(param1, param2);
-            } else if (ACTION_BAZ.equals(action)) {
-                final String param1 = intent.getStringExtra(EXTRA_PARAM1);
-                final String param2 = intent.getStringExtra(EXTRA_PARAM2);
-                handleActionBaz(param1, param2);
+            if (BROADCAST_STOP_ACTION.equals(action)) {
+                Log.d("Intent service", action);
+                PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                alarmManager.cancel(pendingIntent);
+                return;
             }
         }
         setWallPaper();
@@ -120,9 +84,8 @@ public class WallpaperIntentService extends IntentService {
             PendingIntent pendingIntent = PendingIntent.getService(this, 0, theIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
             long currentTimeMillis = System.currentTimeMillis();
-            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 //        alarmManager.set(AlarmManager.RTC, currentTimeMillis + (5 * 1000), pendingIntent);
-            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, 0, (20 * 1000), pendingIntent);
+            this.alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, 0, (20 * 1000), pendingIntent);
         } catch (Exception e) {
             e.printStackTrace();
         }
