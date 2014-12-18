@@ -10,6 +10,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -25,7 +26,9 @@ import java.io.IOException;
 public class WallpaperIntentService extends IntentService {
 
     public static final String BROADCAST_STOP_ACTION = "com.example.omer.MyMuzei.STOPSERVICE";
+    public static final String BROADCAST_START_ACTION = "com.example.omer.MyMuzei.STARTSERVICE";
     private static boolean isFirstTime = true;
+    private static boolean serviceIsStopped = false;
     private AlarmManager alarmManager;
 
     public WallpaperIntentService() {
@@ -39,53 +42,49 @@ public class WallpaperIntentService extends IntentService {
         this.alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
     }
 
+    public static int i = 0;
+
     @Override
     protected void onHandleIntent(Intent intent) {
         Log.d("SERVICEEEEEE", "onHandleIntent()");
 
-        if (intent != null) {
+         if (intent != null) {
             final String action = intent.getAction();
             if (BROADCAST_STOP_ACTION.equals(action)) {
                 Log.d("Intent service", action);
                 PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-                alarmManager.cancel(pendingIntent);
+                this.alarmManager.cancel(pendingIntent); // verifier si l'alarm ne vaut pas NULL quand on stop
+                this.serviceIsStopped = true;
+                stopService(intent);
                 return;
             }
+             else if (BROADCAST_START_ACTION.equals(action))
+            {
+                this.serviceIsStopped = false;
+                intent.setAction("");
+                Log.d("Intent service", "SET REPEATING");
+            }
         }
+        if (this.serviceIsStopped)
+            return;
         setWallPaper();
+        nextWPChange(intent);
         if (isFirstTime) {
-            nextWPChange(intent);
             isFirstTime = false;
         }
     }
-
-    /**
-     * Handle action Foo in the provided background thread with the provided
-     * parameters.
-     */
-    private void handleActionFoo(String param1, String param2) {
-        // TODO: Handle action Foo
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
-
-    /**
-     * Handle action Baz in the provided background thread with the provided
-     * parameters.
-     */
-    private void handleActionBaz(String param1, String param2) {
-        // TODO: Handle action Baz
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
-
 
     private void nextWPChange(Intent theIntent) {
 
         try {
             PendingIntent pendingIntent = PendingIntent.getService(this, 0, theIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
+
             long currentTimeMillis = System.currentTimeMillis();
 //        alarmManager.set(AlarmManager.RTC, currentTimeMillis + (5 * 1000), pendingIntent);
-            this.alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, 0, (20 * 1000), pendingIntent);
+            alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 10 * 1000, pendingIntent);
+
+            //this.alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, 0, (20 * 1000), pendingIntent);
         } catch (Exception e) {
             e.printStackTrace();
         }

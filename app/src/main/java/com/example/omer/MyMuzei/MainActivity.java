@@ -9,15 +9,23 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.app.WallpaperManager;
 import java.io.IOException;
+
+import android.widget.ImageView;
 import android.widget.Toast;
 import android.graphics.drawable.Drawable;
 import android.graphics.Bitmap;
 import android.view.View;
 import android.graphics.BitmapFactory;
 
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
+import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
+
 public class MainActivity extends Activity {
 
     public static final String BROADCAST_STOP_ACTION = "com.example.omer.MyMuzei.STOPSERVICE";
+    public static final String BROADCAST_START_ACTION = "com.example.omer.MyMuzei.STARTSERVICE";
 
     public void setWallPaper(View view) {
         WallpaperManager wallpaperManager = WallpaperManager.getInstance(this);
@@ -60,31 +68,43 @@ public class MainActivity extends Activity {
 
     public void startService(View view)
     {
+        /*
         Log.d("MES LOOOGGG", "start service");
         Intent wpService = new Intent(this, WallpaperIntentService.class);
+        wpService.setAction(BROADCAST_START_ACTION);
         startService(wpService);
         Toast toast = Toast.makeText(this, "service started successfully!", Toast.LENGTH_LONG);
-        toast.show();
+        toast.show();*/
+        downloadImage(); // A PLACER AU BONNE ENDROIT
         //finish();
     }
 
     private void downloadImage()
-    {/*
-        String name = c.getString(str_url);
-        URL url_value = new URL(name);
-        ImageView profile = (ImageView)v.findViewById(R.id.vdo_icon);
-        if (profile != null) {
-            Bitmap mIcon1 =
-                    BitmapFactory.decodeStream(url_value.openConnection().getInputStream());
-            profile.setImageBitmap(mIcon1);
-        }*/
+    {
+        String url = "https://mymuzei-api.herokuapp.com/uploads/wallpaper/image/3/maxresdefault__1_.jpg";
+
+        ImageLoader imageLoader = ImageLoader.getInstance();
+        DisplayImageOptions options = new DisplayImageOptions.Builder().cacheInMemory(true)
+                .cacheOnDisc(true).resetViewBeforeLoading(true)
+                .showImageForEmptyUri(R.drawable.rome)
+                .showImageOnFail(R.drawable.rome)
+                .showImageOnLoading(R.drawable.rome).build();
+
+//initialize image view
+        ImageView imageView = (ImageView)findViewById(R.id.wpImageView);
+
+//download and display image from url
+        imageLoader.displayImage(url, imageView, options);
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-       // startService(new View(getApplicationContext()));
         setContentView(R.layout.activity_main);
+
+        // Create global configuration and initialize ImageLoader with this config
+        ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(this).build();
+        ImageLoader.getInstance().init(config);
     }
 
 
