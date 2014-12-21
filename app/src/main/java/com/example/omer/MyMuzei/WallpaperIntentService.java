@@ -32,6 +32,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Calendar;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
@@ -96,8 +97,22 @@ public class WallpaperIntentService extends IntentService {
         try {
             PendingIntent pendingIntent = PendingIntent.getService(this, 0, theIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-            long currentTimeMillis = System.currentTimeMillis();
-            alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 10 * 1000, pendingIntent);
+            Calendar calendar = Calendar.getInstance();
+
+            Calendar now = Calendar.getInstance();
+            calendar.setTimeInMillis(System.currentTimeMillis());
+
+            calendar.set(Calendar.DAY_OF_WEEK, (Calendar.DAY_OF_WEEK == 7) ? 1 : Calendar.DAY_OF_WEEK+1);
+            calendar.set(Calendar.HOUR_OF_DAY, 20);
+            calendar.set(Calendar.MINUTE, 51);
+            calendar.set(Calendar.SECOND, 0);
+
+            Log.d("calendar.getTimeInMillis()", Long.toString(calendar.getTimeInMillis()));
+            Log.d("now()", Long.toString(now.getTimeInMillis()));
+
+            alarmManager.set(AlarmManager.RTC_WAKEUP, SystemClock.elapsedRealtime() + 24*60*60 * 1000  /*calendar.getTimeInMillis()*/, pendingIntent);
+
+
         } catch (Exception e) {
             e.printStackTrace();
         }
