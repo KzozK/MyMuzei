@@ -5,6 +5,10 @@
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
     <string name="action_setwallpaper">Set wallpaper</string>
-    <string name="action_startService">Start service</string>
-    <string name="action_stopService">Stop service</string>
+    <string name="action_startService">Start this amazing service :D</string>
+    <string name="action_stopService">Stop it :\'(</string>
+    <string name="SetImageAsWP">To set this image bellow as your device wallpaper please click to the button under this image</string>
+    <string name="ServiceTxt">My Muzei propose you to have a new wallpaper everyday.\nTo use this amazing functionality just start the service!</string>
+    <string name="About">About ...</string>
+
 </resources>

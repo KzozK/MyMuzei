@@ -7,19 +7,36 @@ import android.content.Intent;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
+import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
  * a service on a separate handler thread.
- * <p/>
+ * <p>
  * TODO: Customize class - update intent actions, extra parameters and static
  * helper methods.
  */
@@ -27,28 +44,33 @@ public class WallpaperIntentService extends IntentService {
 
     public static final String BROADCAST_STOP_ACTION = "com.example.omer.MyMuzei.STOPSERVICE";
     public static final String BROADCAST_START_ACTION = "com.example.omer.MyMuzei.STARTSERVICE";
-    private static boolean isFirstTime = true;
+    public static final String apiUrl = "http://mymuzei-api.herokuapp.com/api/get_wallpaper";
     private static boolean serviceIsStopped = false;
     private AlarmManager alarmManager;
+    private ImageLoader imgLoader;
 
     public WallpaperIntentService() {
         super("WallpaperIntentService");
     }
 
     @Override
-    public void onCreate()
-    {
+    public void onCreate() {
         super.onCreate();
         this.alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-    }
+        this.imgLoader = ImageLoader.getInstance();
 
-    public static int i = 0;
+        // Create global configuration and initialize ImageLoader with this config
+        if (!this.imgLoader.isInited()) {
+            ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(this).build();
+            this.imgLoader.getInstance().init(config);
+        }
+    }
 
     @Override
     protected void onHandleIntent(Intent intent) {
         Log.d("SERVICEEEEEE", "onHandleIntent()");
 
-         if (intent != null) {
+        if (intent != null) {
             final String action = intent.getAction();
             if (BROADCAST_STOP_ACTION.equals(action)) {
                 Log.d("Intent service", action);
@@ -57,9 +79,7 @@ public class WallpaperIntentService extends IntentService {
                 this.serviceIsStopped = true;
                 stopService(intent);
                 return;
-            }
-             else if (BROADCAST_START_ACTION.equals(action))
-            {
+            } else if (BROADCAST_START_ACTION.equals(action)) {
                 this.serviceIsStopped = false;
                 intent.setAction("");
                 Log.d("Intent service", "SET REPEATING");
@@ -67,11 +87,8 @@ public class WallpaperIntentService extends IntentService {
         }
         if (this.serviceIsStopped)
             return;
-        setWallPaper();
+        new HttpAsyncTask().execute(apiUrl);
         nextWPChange(intent);
-        if (isFirstTime) {
-            isFirstTime = false;
-        }
     }
 
     private void nextWPChange(Intent theIntent) {
@@ -79,20 +96,14 @@ public class WallpaperIntentService extends IntentService {
         try {
             PendingIntent pendingIntent = PendingIntent.getService(this, 0, theIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-
             long currentTimeMillis = System.currentTimeMillis();
-//        alarmManager.set(AlarmManager.RTC, currentTimeMillis + (5 * 1000), pendingIntent);
             alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 10 * 1000, pendingIntent);
-
-            //this.alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, 0, (20 * 1000), pendingIntent);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-        private static boolean state = true;
-
-    public void setWallPaper() {
+    public void setWallPaper(Bitmap wp) {
         WallpaperManager wallpaperManager = WallpaperManager.getInstance(this);
         try {
 
@@ -100,19 +111,8 @@ public class WallpaperIntentService extends IntentService {
             int height = currentWP.getIntrinsicHeight();
             int width = currentWP.getIntrinsicWidth();
 
-            Bitmap rome;
-            if (state) {
-                rome = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.rome);
-                state = false;
-            }
-            else {
-                rome = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.ggstyle);
-                state = true;
-            }
-
-            Bitmap bitmap = Bitmap.createScaledBitmap(rome, width, height, true);
+            Bitmap bitmap = Bitmap.createScaledBitmap(wp, width, height, true);
             wallpaperManager.setBitmap(bitmap);
-
 
             Handler mHandler = new Handler(getMainLooper());
             mHandler.post(new Runnable() {
@@ -126,4 +126,91 @@ public class WallpaperIntentService extends IntentService {
             e.printStackTrace();
         }
     }
+
+    //region LOAD DAILY IMAGE
+
+
+    public static String GET(String url) {
+        InputStream inputStream = null;
+        String result = "";
+        try {
+
+            // create HttpClient
+            HttpClient httpclient = new DefaultHttpClient();
+
+            // make GET request to the given URL
+            HttpResponse httpResponse = httpclient.execute(new HttpGet(url));
+
+            // receive response as inputStream
+            inputStream = httpResponse.getEntity().getContent();
+
+            // convert inputstream to string
+            if (inputStream != null)
+                result = convertInputStreamToString(inputStream);
+            else
+                result = "Did not work!";
+
+        } catch (Exception e) {
+            Log.d("InputStream", e.getLocalizedMessage());
+        }
+
+        return result;
+    }
+
+    private static String convertInputStreamToString(InputStream inputStream) throws IOException {
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+        String line = "";
+        String result = "";
+        while ((line = bufferedReader.readLine()) != null)
+            result += line;
+
+        inputStream.close();
+        return result;
+
+    }
+
+    private class HttpAsyncTask extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... urls) {
+
+            return GET(urls[0]);
+        }
+
+        // onPostExecute displays the results of the AsyncTask.
+        @Override
+        protected void onPostExecute(String result) {
+            try {
+                JSONArray jsonArr = new JSONArray(result);
+                JSONObject WPObject = jsonArr.getJSONObject(0);
+                WPObject.getJSONObject("image").getString("url");
+                String imgUrl = WPObject.getJSONObject("image").getString("url");
+                Log.d("JSON ", imgUrl);
+                downloadImage(imgUrl);
+
+            } catch (JSONException ex) {
+                Log.d("JSON Error", "JSON Parse error in HttpAsyncTask class.");
+            }
+        }
+    }
+
+    public void downloadImage(String imgUrl) {
+        String url = "https://mymuzei-api.herokuapp.com" + imgUrl;
+
+        ImageLoader imageLoader = ImageLoader.getInstance();
+        DisplayImageOptions options = new DisplayImageOptions.Builder().cacheInMemory(true)
+                .cacheOnDisc(true).resetViewBeforeLoading(true)
+                .showImageForEmptyUri(R.drawable.ggstyle)
+                .showImageOnFail(R.drawable.ggstyle)
+                .showImageOnLoading(R.drawable.ggstyle).build();
+
+//download and display image from url
+        imageLoader.loadImage(url, options, new SimpleImageLoadingListener() {
+            @Override
+            public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+                setWallPaper(loadedImage);
+            }
+        });
+    }
+
+    //endregion
 }
